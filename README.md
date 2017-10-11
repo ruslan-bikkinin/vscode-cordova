@@ -12,7 +12,15 @@ Debug your code, find commands in the Command Palette, and use IntelliSense to b
 3. If you're planning on targeting iOS devices,
  * Set up your machine by following instructions at [iOS Platform Guide from Apache Cordova](https://cordova.apache.org/docs/en/latest/guide/platforms/ios/index.html)
  * Install [HomeBrew](http://brew.sh/) on your Mac.
- * Open a Terminal and run `brew install ideviceinstaller ios-webkit-debug-proxy`
+ * Open a Terminal and run
+ ```
+ brew update
+ brew unlink libimobiledevice ios-webkit-debug-proxy ideviceinstaller
+ brew uninstall --force libimobiledevice ios-webkit-debug-proxy ideviceinstaller
+ brew install --HEAD libimobiledevice
+ brew install --HEAD ios-webkit-debug-proxy
+ brew install ideviceinstaller
+ ```
 4. If you're planning on targeting Android devices, set up your machine by following instructions at [Android Platform Guide from Apache Cordova](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html)
 
 ## Add a platform to your Cordova project
@@ -46,8 +54,6 @@ Name                               | Description                                
 `webkitRangeMin`, `webkitRangeMax` | Combines to specify the port range that you want the debugger to use to find the specific device or simulator described in the configuration. | 9223, 9322
 `attachAttempts`                   | The maximum number of times that you want the debugger to attempt to attach to a running iOS app.                                             | 5
 `attachDelay`                      | The time in milliseconds between each attempt to attach to a running iOS application.                                                         | 1000
-`iosDebugProxyPort`                | The port number that you want the debugger to use when it launches iOS applications on a device.                                              | 9221
-`appStepLaunchTimeout`             | The maximum time in milliseconds allowed for each individual step the debugger takes to launch an iOS app on a device.                        | 5000
 `ionicLiveReload`                  | Set to true to enable Ionic live reload.                                                                                                      | false
 `devServerAddress`                 | For Ionic live reload scenario specify the IP address the device can use to contact the Ionic server.                                         | n/a
 `devServerPort`                    | For Ionic live reload scenario specify the port the device can use to contact the Ionic server.                                               | n/a
@@ -203,6 +209,19 @@ If you don’t wish to send usage data to Microsoft, please follow the instructi
 ### OS X / Linux
 
 * Edit VSCodeTelemetrySettings.json file at ~/.vscode-cordova and add "optIn":false.
+
+## Troubleshooting
+
+### Debugging on iOS device
+* `Could not connect to lockdownd`
+```
+brew update
+brew unlink libimobiledevice ios-webkit-debug-proxy
+brew uninstall --force libimobiledevice ios-webkit-debug-proxy
+brew install --HEAD libimobiledevice
+brew install --HEAD ios-webkit-debug-proxy
+```
+More info [here](https://github.com/google/ios-webkit-debug-proxy#troubleshooting)
 
 ## Known Issues
 

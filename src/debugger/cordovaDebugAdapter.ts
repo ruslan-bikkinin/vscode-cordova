@@ -30,8 +30,6 @@ import {SimulationInfo} from '../common/simulationInfo';
 const MISSING_API_ERROR = 'Debugger.setAsyncCallStackDepth';
 
 export interface ICordovaLaunchRequestArgs extends DebugProtocol.LaunchRequestArguments, ICordovaAttachRequestArgs {
-    iosDebugProxyPort?: number;
-    appStepLaunchTimeout?: number;
 
     // Ionic livereload properties
     ionicLiveReload?: boolean;
@@ -433,132 +431,71 @@ export class CordovaDebugAdapter extends ChromeDebugAdapter {
         });
     }
 
+    private getIosLaunchArgs(launchArgs: ICordovaLaunchRequestArgs, projectType: IProjectType): string[] {
+
+        let args = launchArgs.target.toLowerCase() === 'device' ? ['run', 'ios'] : ['emulate', 'ios'];
+
+        if (launchArgs.runArguments && launchArgs.runArguments.length > 0) {
+            return args.concat(launchArgs.runArguments);
+        }
+
+        if (launchArgs.target.toLowerCase() === 'device') {
+            args.push('--device');
+        } else if (launchArgs.target.toLowerCase() !== 'emulator') {
+            args.push(`--target=${launchArgs.target}`);
+        }
+
+        // Verify if we are using Ionic livereload
+        if (launchArgs.ionicLiveReload) {
+            if (projectType.ionic || projectType.ionic2) {
+                // Livereload is enabled, let Ionic do the launch
+                args.push('--livereload');
+            } else {
+                this.outputLogger(CordovaDebugAdapter.NO_LIVERELOAD_WARNING);
+            }
+        }
+
+        return args;
+    }
+
     private launchIos(launchArgs: ICordovaLaunchRequestArgs, projectType: IProjectType): Q.Promise<void> {
         if (os.platform() !== 'darwin') {
             return Q.reject<void>('Unable to launch iOS on non-mac machines');
         }
-        let workingDirectory = launchArgs.cwd;
-        let errorLogger = (message) => this.outputLogger(message, true);
 
         this.outputLogger('Launching app (This may take a while)...');
 
-        let iosDebugProxyPort = launchArgs.iosDebugProxyPort || 9221;
-        let appStepLaunchTimeout = launchArgs.appStepLaunchTimeout || 5000;
+        let args = this.getIosLaunchArgs(launchArgs, projectType);
+        // Let Ionic handle app launch
+        if (args.indexOf('--livereload') > -1) {
+            return this.startIonicDevServer(launchArgs, args).then(() => void 0);
+        }
+
+        const launchPromise = cordovaRunCommand(args, launchArgs.cwd)
+            .then(() => void 0)
+            .progress(progress => {
+                this.outputLogger(progress[0], progress[1]);
+            });
+
         // Launch the app
         if (launchArgs.target.toLowerCase() === 'device') {
-            let args = ['build', 'ios'];
-
-            if (launchArgs.runArguments && launchArgs.runArguments.length > 0) {
-                args.push(...launchArgs.runArguments);
-            } else {
-                args.push('--device');
-                // Verify if we are using Ionic livereload
-                if (launchArgs.ionicLiveReload) {
-                    if (projectType.ionic || projectType.ionic2) {
-                        // Livereload is enabled, let Ionic do the launch
-                        args = ['run', 'ios', '--device', '--livereload'];
-                    } else {
-                        this.outputLogger(CordovaDebugAdapter.NO_LIVERELOAD_WARNING);
-                    }
-                }
-            }
-
-            if (args.indexOf('--livereload') > -1) {
-                if (args[0] === 'build') {
-                    args[0] = 'run';
-                }
-                return this.startIonicDevServer(launchArgs, args).then(() => void 0);
-            }
-
-            // cordova run ios does not terminate, so we do not know when to try and attach.
-            // Instead, we try to launch manually using homebrew.
-            return cordovaRunCommand(args, workingDirectory).then((output) => {
-                let buildFolder = path.join(workingDirectory, 'platforms', 'ios', 'build', 'device');
-
-                this.outputLogger('Installing app on device');
-
-                let installPromise = Q.nfcall(fs.readdir, buildFolder).then((files: string[]) => {
-                    let ipaFiles = files.filter((file) => /\.ipa$/.test(file));
-
-                    if (ipaFiles.length !== 0) {
-                        return path.join(buildFolder, ipaFiles[0]);
-                    }
-
-                    // No .ipa was found, look for a .app to convert to .ipa using xcrun
-                    let appFiles = files.filter((file) => /\.app$/.test(file));
-
-                    if (appFiles.length === 0) {
-                        throw new Error('Unable to find a .app or a .ipa to install');
-                    }
-
-                    let appFile = path.join(buildFolder, appFiles[0]);
-                    let ipaFile = path.join(buildFolder, path.basename(appFile, path.extname(appFile)) + '.ipa'); // Convert [path]/foo.app to [path]/foo.ipa
-                    let execArgs = ['-v', '-sdk', 'iphoneos', 'PackageApplication', `${appFile}`, '-o', `${ipaFile}`];
-
-                    return execCommand('xcrun', execArgs, errorLogger).then(() => ipaFile).catch((err): string => {
-                        throw new Error(`Error converting ${path.basename(appFile)} to .ipa`);
-                    });
-                }).then((ipaFile: string) => {
-                    return execCommand('ideviceinstaller', ['-i', ipaFile], errorLogger).catch((err: Error): any => {
-                        let errorCode: string = (<any>err).code;
-                        if (errorCode && errorCode === 'ENOENT') {
-                            throw new Error('Unable to find ideviceinstaller. Please ensure it is in your PATH and re-open Visual Studio Code');
-                        }
-                        throw err;
-                    });
-                });
-
-                return Q.all([CordovaIosDeviceLauncher.getBundleIdentifier(workingDirectory), installPromise]);
-            }, undefined, (progress) => {
-                this.outputLogger(progress[0], progress[1]);
-            }).spread((appBundleId) => {
-                // App is now built and installed. Try to launch
-                this.outputLogger('Launching app');
-                return CordovaIosDeviceLauncher.startDebugProxy(iosDebugProxyPort).then(() => {
-                    return CordovaIosDeviceLauncher.startApp(appBundleId, iosDebugProxyPort, appStepLaunchTimeout);
-                });
-            }).then(() => void (0));
-        } else {
-            let target = launchArgs.target.toLowerCase() === 'emulator' ? null : launchArgs.target;
-            let args = ['emulate', 'ios'];
-
-            if (launchArgs.runArguments && launchArgs.runArguments.length > 0) {
-                args.push(...launchArgs.runArguments);
-            } else {
-                if (target) {
-                    args.push('--target=' + target);
-                }
-                // Verify if we are using Ionic livereload
-                if (launchArgs.ionicLiveReload) {
-                    if (projectType.ionic || projectType.ionic2) {
-                        // Livereload is enabled, let Ionic do the launch
-                        args.push('--livereload');
-                    } else {
-                        this.outputLogger(CordovaDebugAdapter.NO_LIVERELOAD_WARNING);
-                    }
-                }
-            }
-
-            if (args.indexOf('--livereload') > -1) {
-                return this.startIonicDevServer(launchArgs, args).then(() => void 0);
-            }
-
-            return cordovaRunCommand(args, workingDirectory)
-                .progress((progress) => {
-                    this.outputLogger(progress[0], progress[1]);
-                }).catch((err) => {
-                    if (target) {
-                        return cordovaRunCommand(['emulate', 'ios', '--list'], workingDirectory).then((output) => {
-                            // List out available targets
-                            errorLogger('Unable to run with given target.');
-                            errorLogger(output[0].replace(/\*+[^*]+\*+/g, '')); // Print out list of targets, without ** RUN SUCCEEDED **
-                            throw err;
-                        });
-                    }
-
-                    throw err;
-                });
+            this.outputLogger('Installing app on device');
+            return launchPromise;
         }
+
+        // if target is specified, catch error and print a list of available targets
+        return launchPromise.catch((err) => {
+            if (launchArgs.target.toLowerCase() === 'emulator') {
+                throw err;
+            }
+
+            return cordovaRunCommand(['emulate', 'ios', '--list'], launchArgs.cwd).then((output) => {
+                // List out available targets
+                this.outputLogger('Unable to run with given target.', true);
+                this.outputLogger(output[0].replace(/\*+[^*]+\*+/g, ''), true); // Print out list of targets, without ** RUN SUCCEEDED **
+                throw err;
+            });
+        });
     }
 
     private attachIos(attachArgs: ICordovaAttachRequestArgs): Q.Promise<IAttachRequestArgs> {
