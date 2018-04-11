@@ -29,7 +29,11 @@ export class AppCenterCommandPalleteHandler {
         this.appCenterManager = manager;
     }
 
-    public run(command: AppCenterCommandType): Q.Promise<void>  {
+    public run(command: AppCenterCommandType): Q.Promise<void> {
+        if (VsCodeUtils.isAppCenterExtensionInstalled()) {
+            VsCodeUtils.ShowInformationMessage(ACStrings.PleaseUseAppCenterExtension);
+            return Q.resolve(void 0);
+        }
         return ACUtils.isCodePushProject(this.appCenterManager.projectRootPath).then((isCodePush: boolean) => {
             if (!isCodePush) {
                 VsCodeUtils.ShowWarningMessage(ACStrings.NoCodePushDetectedMsg);
@@ -45,7 +49,7 @@ export class AppCenterCommandPalleteHandler {
                         VsCodeUtils.ShowWarningMessage(ACStrings.UserIsNotLoggedInMsg);
                         return Q.resolve(void 0);
                     } else {
-                        const clientOrNull: AppCenterClient | null  = this.resolveAppCenterClient(profile);
+                        const clientOrNull: AppCenterClient | null = this.resolveAppCenterClient(profile);
                         if (clientOrNull) {
                             this.client = clientOrNull;
 

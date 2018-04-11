@@ -42,17 +42,20 @@ export class AppCenterExtensionManager implements Disposable {
     }
 
     public setupAppCenterStatusBar(profile: Profile | null): Q.Promise<void> {
-        if (profile && profile.userName) {
+        if (!VsCodeUtils.isAppCenterExtensionInstalled()) {
+            if (profile && profile.userName) {
+                return VsCodeUtils.setStatusBar(this.appCenterStatusBarItem,
+                    `$(icon octicon-person) ${profile.userName}`,
+                    ACStrings.YouAreLoggedInMsg(profile.userName),
+                    `${ACCommandNames.ShowMenu}`
+                );
+            }
             return VsCodeUtils.setStatusBar(this.appCenterStatusBarItem,
-                `$(icon octicon-person) ${profile.userName}`,
-                ACStrings.YouAreLoggedInMsg(profile.userName),
-                `${ACCommandNames.ShowMenu}`
+                `$(icon octicon-sign-in) ${ACStrings.LoginToAppCenterButton}`,
+                ACStrings.UserMustSignIn,
+                `${ACCommandNames.Login}`
             );
         }
-        return VsCodeUtils.setStatusBar(this.appCenterStatusBarItem,
-            `$(icon octicon-sign-in) ${ACStrings.LoginToAppCenterButton}`,
-            ACStrings.UserMustSignIn,
-            `${ACCommandNames.Login}`
-        );
+        return Q.resolve(void 0);
     }
 }

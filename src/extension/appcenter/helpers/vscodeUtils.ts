@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
 import { MessageTypes, ACConstants } from '../appCenterConstants';
-import { commands, StatusBarItem, window, MessageItem } from 'vscode';
+import { commands, StatusBarItem, window, MessageItem, extensions } from 'vscode';
 import { ACUtils } from './utils';
 import * as Q from 'q';
 
@@ -86,5 +86,10 @@ export class VsCodeUtils {
         }
 
         return chosenItem;
+    }
+
+    public static isAppCenterExtensionInstalled() {
+        const appcenterExt = extensions.getExtension(ACConstants.AppCenterExtId);
+        return appcenterExt ? true : false;
     }
 }
