@@ -88,7 +88,7 @@ export class VsCodeUtils {
         return chosenItem;
     }
 
-    public static isAppCenterExtensionInstalled() {
+    public static appCenterExtensionIsInstalled() {
         const appcenterExt = extensions.getExtension(ACConstants.AppCenterExtId);
         return appcenterExt ? true : false;
     }

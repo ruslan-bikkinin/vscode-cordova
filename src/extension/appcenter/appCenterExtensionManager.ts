@@ -42,7 +42,7 @@ export class AppCenterExtensionManager implements Disposable {
     }
 
     public setupAppCenterStatusBar(profile: Profile | null): Q.Promise<void> {
-        if (!VsCodeUtils.isAppCenterExtensionInstalled()) {
+        if (!VsCodeUtils.appCenterExtensionIsInstalled()) {
             if (profile && profile.userName) {
                 return VsCodeUtils.setStatusBar(this.appCenterStatusBarItem,
                     `$(icon octicon-person) ${profile.userName}`,

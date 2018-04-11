@@ -30,7 +30,7 @@ export class AppCenterCommandPalleteHandler {
     }
 
     public run(command: AppCenterCommandType): Q.Promise<void> {
-        if (VsCodeUtils.isAppCenterExtensionInstalled()) {
+        if (VsCodeUtils.appCenterExtensionIsInstalled()) {
             VsCodeUtils.ShowInformationMessage(ACStrings.PleaseUseAppCenterExtension);
             return Q.resolve(void 0);
         }
