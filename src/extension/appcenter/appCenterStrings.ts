@@ -33,7 +33,7 @@ export class ACStrings {
     public static PleaseProvideTargetBinaryVersion: string = 'Please provide semver compliant version';
     public static LogoutMenuLabel: string = 'Logout';
     public static MenuTitlePlaceholder: string = 'Please select action';
-    public static PleaseUseAppCenterExtension: string = "We're noticed that you have AppCenter extension installed. Please use it's command instead."
+    public static PleaseUseAppCenterExtension: string = "We're noticed that you have AppCenter extension installed. Please use it's command instead.";
 
     public static YouAreLoggedInMsg: (name: string) => string = (name: string) => {
          return `You are logged in to App Center as '${name}'`;
