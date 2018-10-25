@@ -178,7 +178,7 @@ export class CordovaDebugAdapter extends ChromeDebugAdapter {
                     return result;
                 }
 
-                retry();
+                return retry();
             },
             retry);
     }
@@ -506,6 +506,7 @@ export class CordovaDebugAdapter extends ChromeDebugAdapter {
                 // Get the pid from app package name
                 this.runAdbCommand(pidofCommandArguments, errorLogger)
                     .then((pid) => {
+                        this.outputLogger("1");
                         if (pid && /^[0-9]+$/.test(pid.trim())) {
                             return pid.trim();
                         }
@@ -513,12 +514,14 @@ export class CordovaDebugAdapter extends ChromeDebugAdapter {
                         throw Error(CordovaDebugAdapter.pidofNotFoundError);
 
                     }).catch((err) => {
+                        this.outputLogger("2");
                         if (err.message !== CordovaDebugAdapter.pidofNotFoundError) {
                             return;
                         }
 
                         return this.runAdbCommand(getPidCommandArguments, errorLogger)
                             .then((psResult) => {
+                                this.outputLogger("3");
                                 const lines = psResult.split("\n");
                                 const keys = lines.shift().split(PS_FIELDS_SPLITTER_RE);
                                 const nameIdx = keys.indexOf("NAME");
@@ -538,6 +541,7 @@ export class CordovaDebugAdapter extends ChromeDebugAdapter {
                     .then(pid =>
                         this.runAdbCommand(getSocketsCommandArguments, errorLogger)
                             .then((getSocketsResult) => {
+                                this.outputLogger("4");
                                 const lines = getSocketsResult.split("\n");
                                 const keys = lines.shift().split(/[\s\r]+/);
                                 const flagsIdx = keys.indexOf("Flags");
