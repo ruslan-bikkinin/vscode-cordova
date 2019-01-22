@@ -1,3 +1,23 @@
+## 1.6.2
+* Fix issue that caused extension crashes on macOS with VS Code Insiders 1.31 [#472](https://github.com/Microsoft/vscode-cordova/issues/472)
+* Fix debugging issues on macOS with VS Code Insiders 1.31 connected to changes in `unlink` function in Node 10 [#474](https://github.com/Microsoft/vscode-cordova/pull/474)
+
+## 1.6.1
+* Fix several security vulnerabilities
+* Fix debugging problems on Windows with non-latin locale [#460](https://github.com/Microsoft/vscode-cordova/issues/460)
+* Fix simulate scenarios on android on Linux [#438](https://github.com/Microsoft/vscode-cordova/issues/438)
+
+## 1.6.0
+
+* Move to Azure pipelines builds instead of Travis CI for pull requests validation
+* `previewHtml` will be deprecated in the future releases of VS Code and due to this the following changes were made:
+  * Simulate window now opens in a browser instead of opening inside VS Code
+  * `simulatorInExternalBrowser` and `cordova.simulatorInExternalBrowser` settings was removed
+
+## 1.5.1
+
+* Return extension name back to "Cordova Tools"
+
 ## 1.5.0
 
 * Added Ionic 4 beta support
