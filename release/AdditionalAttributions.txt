@@ -2,6 +2,7 @@
 2.	Ionic Documentation (http://ionicframework.com/docs/)
 3.	TACO Tools for Apache Cordova (https://github.com/Microsoft/TACO)
 4.  pako 1.0.8 (https://github.com/nodeca/pako)
+5.  jsonify 0.0.0 (https://github.com/substack/jsonify)
 
 %% DefinitelyTyped NOTICES, INFORMATION, AND LICENSE BEGIN HERE
 =========================================
@@ -159,4 +160,10 @@ THE SOFTWARE.
 
 
 
+***********************End Entry******************
+
+******************Begin Entry***************
+jsonify 0.0.0
+https://github.com/substack/jsonify
+public domain
 ***********************End Entry******************
